@@ -1,0 +1,52 @@
+---
+- name: VM from template
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: yes
+  become_method: enable
+  vars:
+    vcenter_hostname: vcenterengine1.datanix.comm
+    vcenter_user: administrator@datanix.comm
+    vcenter_pass: Tekin0l0gy##
+    esxhost: esxiengine1.datanix.comm
+    datastore: esxiengine1
+    custom_ip: 10.10.10.20
+    vmtemplate: largetemplate
+    name: "lnxengine020"
+    disk_size: 80
+    notes: Ansible Virtual Machine Provisioning 
+    folder: "/"
+    dumpfacts: False
+  tasks:
+    - name: Create VM from template
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_pass }}"
+        esxi_hostname: "{{ esxhost }}"
+        datacenter: MGT
+        name: "{{ name }}"
+        state: poweredon
+        folder: "{{ folder }}"
+        template: "{{ vmtemplate }}"
+        disk:
+          - size_gb: "{{ disk_size | default(80) }}"
+            type: thin
+            datastore: "{{ datastore }}"
+        networks:
+        - name: VM Network
+          type: static
+          ip: "{{ custom_ip }}"
+          netmask: 255.255.255.0
+          gateway: 10.10.10.1
+          dns_servers:
+          - 10.10.10.11
+          - 10.10.10.12
+          domain: datanix.comm
+        hardware:
+          memory_mb: "{{ vm_memory | default(2048) }}"
+        wait_for_ip_address: True
+        state: present
+      register: newvm
